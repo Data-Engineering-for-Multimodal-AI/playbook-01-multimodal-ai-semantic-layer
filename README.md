@@ -1,6 +1,6 @@
-# Granite Lite - Semantic Layer for ChestMNIST
+# Multimodal AI Semantic Layer for ChestMNIST
 
-A minimal, production-lean semantic layer that fuses three modalities (image, text, time-series) for clinical encounters using the ChestMNIST dataset.
+Granite Lite -a minimal, production-lean semantic layer that fuses three modalities (image, text, time-series) for clinical encounters using the ChestMNIST dataset.
 
 ## Quick Start
 
