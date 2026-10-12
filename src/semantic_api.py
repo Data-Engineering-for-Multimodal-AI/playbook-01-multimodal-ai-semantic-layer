@@ -27,6 +27,8 @@ from models import FusedEvent
 app = FastAPI(title="Granite Lite Semantic API", version="1.0.0")
 
 # Mount static files and templates
+# static/images is populated by `python main.py --ingest`
+os.makedirs("static/images", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
