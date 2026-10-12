@@ -1,0 +1,28 @@
+[project]
+name = "playbook-01-multimodal-ai-semantic-layer"
+version = "2026.10"
+description = "Granite Lite: a semantic layer over ChestMNIST images, clinical notes and vitals (Data Engineering for Multimodal AI, Chapter 1)"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.12"
+dependencies = [
+    "duckdb>=1.1",
+    "fastapi>=0.115",
+    "jinja2>=3.1",
+    "pandas>=2.2",      # DuckDB .df() in src/semantic_api.py
+    "pydantic>=2.7",
+    "requests>=2.32",   # demo.py
+    "uvicorn>=0.30",
+]
+
+[dependency-groups]
+dev = [
+    "httpx>=0.27",      # FastAPI TestClient
+    "pytest>=8",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
