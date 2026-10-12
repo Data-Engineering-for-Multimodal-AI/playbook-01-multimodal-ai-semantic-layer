@@ -1,5 +1,9 @@
 """
 Data ingestion pipeline with contract validation
+
+Legacy: not used by main.py. This earlier version generated synthetic notes
+and vitals on the fly. The playbook uses src/raw_ingestion.py, which reads
+the files in data/raw/. Kept for reference.
 """
 
 import os
