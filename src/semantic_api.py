@@ -98,7 +98,7 @@ class SemanticFusionEngine:
         """, [encounter_id]).fetchone()
         
         if result:
-            return eval(result[0])  # Convert string back to list
+            return json.loads(result[0])  # stored as str(list), e.g. "[0, 1, 0]"
         return []
     
     def get_vitals_summary(self, vitals_path: str) -> Dict[str, Any]:
@@ -107,9 +107,9 @@ class SemanticFusionEngine:
             return {}
         
         # Read vitals CSV and compute summary stats
-        vitals_df = self.conn.execute(f"""
-            SELECT * FROM read_csv_auto('{vitals_path}')
-        """).df()
+        vitals_df = self.conn.execute(
+            "SELECT * FROM read_csv_auto(?)", [vitals_path]
+        ).df()
         
         if vitals_df.empty:
             return {}
