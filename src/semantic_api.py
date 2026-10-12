@@ -11,7 +11,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -288,7 +288,7 @@ async def submit_correction(correction: CorrectionRequest):
         raise HTTPException(status_code=500, detail=f"Failed to save correction: {str(e)}")
 
 @app.get("/reviewer/{encounter_id}", response_class=HTMLResponse)
-async def reviewer_ui(encounter_id: str):
+async def reviewer_ui(request: Request, encounter_id: str):
     """Simple reviewer UI for human-in-the-loop correction"""
     try:
         event = fusion_engine.fuse_event(encounter_id)
@@ -298,8 +298,7 @@ async def reviewer_ui(encounter_id: str):
             SELECT encounter_id FROM curated_manifest ORDER BY encounter_id
         """).fetchall()
         
-        return templates.TemplateResponse("reviewer.html", {
-            "request": {"url": {"pathname": f"/reviewer/{encounter_id}"}},
+        return templates.TemplateResponse(request, "reviewer.html", {
             "encounter_id": encounter_id,
             "event": event,
             "encounters": [row[0] for row in encounters]
