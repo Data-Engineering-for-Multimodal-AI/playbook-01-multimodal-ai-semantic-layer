@@ -52,6 +52,7 @@ class SemanticFusionEngine:
     
     def __init__(self, db_path: str):
         self.db_path = db_path
+        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         self.conn = duckdb.connect(db_path)
         
         # Medical condition mapping
