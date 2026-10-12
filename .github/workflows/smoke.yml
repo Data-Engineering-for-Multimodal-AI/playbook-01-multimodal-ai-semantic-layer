@@ -21,7 +21,6 @@ jobs:
         run: make smoke
       - name: Printed install path (pip install -r requirements.txt)
         run: |
-          uv venv --python ${{ matrix.python-version }} /tmp/pipenv
-          /tmp/pipenv/bin/python -m ensurepip -q
+          uv venv --seed --python ${{ matrix.python-version }} /tmp/pipenv
           /tmp/pipenv/bin/python -m pip install -q -r requirements.txt
           /tmp/pipenv/bin/python main.py --ingest
