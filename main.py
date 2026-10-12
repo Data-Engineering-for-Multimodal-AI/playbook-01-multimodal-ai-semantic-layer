@@ -68,13 +68,14 @@ def ingest_data():
 def main():
     parser = argparse.ArgumentParser(description="Granite Lite Semantic Layer")
     parser.add_argument("--ingest", action="store_true", help="Ingest raw data files")
+    parser.add_argument("--setup", action="store_true", help="Alias for --ingest (used by start.sh and demo.py)")
     parser.add_argument("--server", action="store_true", help="Start the semantic API server")
     parser.add_argument("--port", type=int, default=8000, help="Port for the API server")
     parser.add_argument("--host", default="0.0.0.0", help="Host for the API server")
     
     args = parser.parse_args()
     
-    if args.ingest:
+    if args.ingest or args.setup:
         ingest_data()
     elif args.server:
         import uvicorn
