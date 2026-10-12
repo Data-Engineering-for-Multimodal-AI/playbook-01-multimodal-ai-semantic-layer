@@ -1,7 +1,7 @@
 # Multimodal AI Semantic Layer for ChestMNIST
 
 **Chapter 1 playbook** from *Data Engineering for Multimodal AI* (O'Reilly, 2026), pp. 20–31.
-Book: https://oreil.ly/data-engineering-multimodal · Errata: see the errata link on the book page.
+Book: https://oreil.ly/data-engineering-multimodal
 
 > Want the code exactly as printed? Use the `first-edition` tag. This branch is the 2026 maintenance update; see [Differences from the printed book](#differences-from-the-printed-book).
 
@@ -68,7 +68,7 @@ Other entry points: `python test_system.py` prints fused events from the databas
 | `generate_raw_data.py --seed` (default 42) | Regeneration is now repeatable. The committed notes and vitals predate the seed, so regenerating gives different text and values from the repo's files | n/a |
 | This README describes linking as a shared encounter ID from file names and says that notes and vitals are synthetic | Match what the code does | Ch. 1 text, "entity resolution linking modalities" |
 
-Full list: [CHANGELOG.md](CHANGELOG.md).
+This section is the record of changes since printing. Full list: [CHANGELOG.md](CHANGELOG.md).
 
 ## Data and licenses
 
