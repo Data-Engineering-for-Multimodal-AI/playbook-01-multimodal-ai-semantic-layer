@@ -20,14 +20,15 @@ class RawDataIngestionPipeline:
     def __init__(self, db_path: str = "data/processed/granite_lite.db"):
         self.db_path = db_path
         self.validator = ContractValidator()
+        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         self.conn = duckdb.connect(db_path)
         self._create_manifest_tables()
     
     def _create_manifest_tables(self):
-        """Create manifest tables in DuckDB"""
+        """Create (or reset) manifest tables in DuckDB so re-running ingestion does not duplicate rows"""
         # Image manifest
         self.conn.execute("""
-            CREATE TABLE IF NOT EXISTS image_manifest (
+            CREATE OR REPLACE TABLE image_manifest (
                 entity_id VARCHAR,
                 encounter_id VARCHAR,
                 modality VARCHAR,
@@ -41,7 +42,7 @@ class RawDataIngestionPipeline:
         
         # Note manifest
         self.conn.execute("""
-            CREATE TABLE IF NOT EXISTS note_manifest (
+            CREATE OR REPLACE TABLE note_manifest (
                 entity_id VARCHAR,
                 encounter_id VARCHAR,
                 modality VARCHAR,
@@ -55,7 +56,7 @@ class RawDataIngestionPipeline:
         
         # Vitals manifest
         self.conn.execute("""
-            CREATE TABLE IF NOT EXISTS vitals_manifest (
+            CREATE OR REPLACE TABLE vitals_manifest (
                 entity_id VARCHAR,
                 encounter_id VARCHAR,
                 modality VARCHAR,
@@ -68,7 +69,7 @@ class RawDataIngestionPipeline:
         
         # Curated manifest (unified view)
         self.conn.execute("""
-            CREATE TABLE IF NOT EXISTS curated_manifest (
+            CREATE OR REPLACE TABLE curated_manifest (
                 encounter_id VARCHAR,
                 entity_id VARCHAR,
                 image_path VARCHAR,

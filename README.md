@@ -1,116 +1,208 @@
 # Multimodal AI Semantic Layer for ChestMNIST
 
-Granite Lite -a minimal, production-lean semantic layer that fuses three modalities (image, text, time-series) for clinical encounters using the ChestMNIST dataset.
+**Chapter 1 playbook** from *Data Engineering for Multimodal AI* (O'Reilly, 2026), pp. 20–31.
+Book: https://oreil.ly/data-engineering-multimodal
 
-## Quick Start
+> Want the code exactly as printed? Use the `first-edition` tag. This branch is the 2026 maintenance update; see [Differences from the printed book](#differences-from-the-printed-book).
 
-### 1. Install Dependencies
+## What you'll build
+
+Granite Lite: a minimal, production-lean semantic layer that fuses three modalities (image, text, time-series) for clinical encounters using the ChestMNIST dataset.
+
+- **Images**: 50 ChestMNIST chest X-ray thumbnails (28×28) with their 14 diagnostic labels
+- **Text**: clinical notes, **synthetic**, generated from each image's labels by `generate_raw_data.py`
+- **Time-series**: vital signs (HR, SpO2, RR at 1 Hz for 2 minutes), **synthetic**, from the same script
+
+How the pieces fit, as the code implements them:
+
+- **Linking modalities.** Each image file `chestmnist_sample_NNN_…png` becomes encounter `enc_{NNN+1}` (so `sample_005` → `enc_00006`). Notes and vitals carry the same encounter ID in their file names. Linking is by this shared ID; there is no fuzzy entity resolution.
+- **Contracts.** Every record must carry `entity_id`, `encounter_id`, `modality`, `timestamp`, `provenance` and `quality` in [0, 1] (`src/models.py`). Violations are counted.
+- **Quality scores** are fixed per modality (image 0.95, note 0.85, vitals 0.90). They show where a real quality metric would plug in.
+- **Fusion.** The diagnosis is the first active image label. Confidence is the mean of the per-modality evidence scores (quality × 0.9 / 0.7 / 0.6).
+- **Storage.** DuckDB, with `image_manifest`, `note_manifest`, `vitals_manifest` and the joined `curated_manifest`. Ingestion rebuilds them on each run.
+- **API.** FastAPI: `GET /event/{encounter_id}`, `GET /encounters`, `POST /corrections`, and `GET /reviewer/{encounter_id}`, a web page for human-in-the-loop corrections.
+
+## Quick start
+
+As printed in the book:
+
 ```bash
-pip install -r requirements.txt
-```
-
-### 2. Ingest Raw Data
-```bash
+pip install -r requirements.txt     # Python 3.12 or newer
 python main.py --ingest
-```
-
-### 3. Start API Server
-```bash
 python main.py --server
 ```
 
-### 4. Access the System
+Then open:
 - **API**: http://localhost:8000
 - **Reviewer UI**: http://localhost:8000/reviewer/enc_00001
-- **API Docs**: http://localhost:8000/docs
+- **API docs**: http://localhost:8000/docs
 
-## What It Does
+Using [uv](https://docs.astral.sh/uv/) instead:
 
-### Multi-Modal Fusion
-- **Images**: Chest X-ray images with diagnostic labels
-- **Text**: Clinical notes with medical terminology
-- **Time-series**: Vital signs monitoring data
-
-### Semantic API
-- `GET /event/{encounter_id}` - Get fused clinical event
-- `GET /encounters` - List all encounters
-- `POST /corrections` - Submit human corrections
-- `GET /reviewer/{encounter_id}` - Web-based reviewer interface
-
-### Data Quality
-- Contract validation for all data records
-- Quality scoring per modality
-- Evidence tracking with confidence metrics
-- Human-in-the-loop correction system
-
-## Example Usage
-
-### Get a Clinical Event
 ```bash
-curl http://localhost:8000/event/enc_00006
+uv sync
+uv run python main.py --ingest
+uv run python main.py --server
 ```
 
-### Submit a Correction
+Run the end-to-end check (about 20 seconds on a laptop, no network after install): `make smoke`
+
+Other entry points: `python test_system.py` prints fused events from the database; `python demo.py` and `./start.sh` ingest if needed, then start the server.
+
+## Tested on
+
+| Date | OS | Python | Key libraries |
+|---|---|---|---|
+| 2026-10-12 | macOS 26.5.1 (arm64) | 3.12.15, 3.13.16 | fastapi 0.143.0, starlette 1.7.0, uvicorn 0.54.0, duckdb 1.5.6, pydantic 2.14.1, pandas 3.0.6, numpy 2.5.4 |
+| CI, on every push | ubuntu-latest | 3.12, 3.13 | same, from `uv.lock` |
+
+## Differences from the printed book
+
+| What changed | Why | Book page |
+|---|---|---|
+| `requirements.txt` now exists (pinned, exported from `uv.lock`). Python 3.12+ required | The file was missing, so step 1 failed | Ch. 1 setup step (pp. 20–31) |
+| `python main.py --ingest` rebuilds the database on each run, and the database is no longer committed | Re-running added duplicate rows (450 curated rows for 50 encounters on a fresh clone) | Ch. 1 ingest step |
+| Reviewer UI works on current FastAPI/Starlette | Starlette 1.0 removed the old template call; the page returned HTTP 500 | Ch. 1 reviewer step |
+| `python main.py --setup` works (alias for `--ingest`) | `start.sh` and `demo.py` called a flag that didn't exist | n/a |
+| `static/images/` is filled by `--ingest` instead of being committed | Generated copy of `data/raw/images/` | n/a |
+| `generate_raw_data.py --seed` (default 42) | Regeneration is now repeatable. The committed notes and vitals predate the seed, so regenerating gives different text and values from the repo's files | n/a |
+| This README describes linking as a shared encounter ID from file names and says that notes and vitals are synthetic | Match what the code does | Ch. 1 text, "entity resolution linking modalities" |
+
+This section is the record of changes since printing. Full list: [CHANGELOG.md](CHANGELOG.md).
+
+## Data and licenses
+
+The code is MIT-licensed. The data is not all MIT:
+
+| Path | What | Source | License |
+|---|---|---|---|
+| `data/raw/images/` (50 PNGs) | ChestMNIST 28×28 chest X-rays with 14-label vectors in the file names | [MedMNIST v2](https://medmnist.com/), derived from the NIH ChestX-ray14 dataset (de-identified) | [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/) |
+| `data/raw/notes/` (50 TXT) | Synthetic clinical notes | Generated by `generate_raw_data.py` | MIT (this repo) |
+| `data/raw/vitals/` (50 CSV) | Synthetic vital signs | Generated by `generate_raw_data.py` | MIT (this repo) |
+
+No real patient notes or vitals are included. If you use the ChestMNIST images, cite:
+
+- Jiancheng Yang, Rui Shi, Donglai Wei, Zequan Liu, Lin Zhao, Bilian Ke, Hanspeter Pfister, Bingbing Ni. "MedMNIST v2 – A large-scale lightweight benchmark for 2D and 3D biomedical image classification." *Scientific Data*, 2023.
+- Jiancheng Yang, Rui Shi, Bingbing Ni. "MedMNIST Classification Decathlon: A Lightweight AutoML Benchmark for Medical Image Analysis." *IEEE ISBI*, 2021.
+
+## Expected output
+
+From a fresh clone on 2026-10-12, macOS 26.5.1 arm64, Python 3.12.15, using `pip install -r requirements.txt`.
+
+`python main.py --ingest`:
+
+```
+Starting Granite Lite data ingestion...
+Copied images to static/images
+Ingesting raw data files...
+Starting raw data ingestion...
+Ingesting images...
+Processed 50 images
+Ingesting clinical notes...
+Processed 50 notes
+Ingesting vital signs...
+Processed 50 vitals
+Creating curated manifest...
+Contract violations: 0
+
+Ingestion Results:
+- Images processed: 50
+- Notes processed: 50
+- Vitals processed: 50
+- Contract violations: 0
+```
+
+`curl http://localhost:8000/event/enc_00006` (piped through `python -m json.tool`; timestamps vary):
+
+```json
+{
+    "encounter_id": "enc_00006",
+    "diagnosis": "infiltration",
+    "confidence": 0.6633333305517832,
+    "evidence": [
+        {
+            "modality": "image",
+            "source": "data/raw/images/chestmnist_sample_005_label_[0 0 0 1 0 1 0 0 0 0 0 0 0 0].png",
+            "quality": 0.949999988079071,
+            "findings": [
+                "infiltration",
+                "nodule"
+            ],
+            "confidence": 0.8549999892711639
+        },
+        {
+            "modality": "note",
+            "source": "clinical_note",
+            "quality": 0.8500000238418579,
+            "content": "Patient presents with fatigue. Physical examination reveals stable vital signs. Monitor closely",
+            "confidence": 0.5950000166893005
+        },
+        {
+            "modality": "vitals",
+            "source": "data/raw/vitals/enc_00006_vitals.csv",
+            "quality": 0.8999999761581421,
+            "summary": {
+                "avg_hr": 74.20833333333333,
+                "avg_spo2": 97.85833333333333,
+                "avg_rr": 16.191666666666666,
+                "min_spo2": 96.0,
+                "max_hr": 85.0,
+                "data_points": 120
+            },
+            "confidence": 0.5399999856948853
+        }
+    ],
+    "lineage": {
+        "data_sources": [
+            "data/raw/images/chestmnist_sample_005_label_[0 0 0 1 0 1 0 0 0 0 0 0 0 0].png",
+            "clinical_note",
+            "data/raw/vitals/enc_00006_vitals.csv"
+        ],
+        "processing_timestamp": "2026-10-12T14:10:57.564226",
+        "fusion_algorithm": "weighted_evidence",
+        "quality_scores": {
+            "image": 0.949999988079071,
+            "note": 0.8500000238418579,
+            "vitals": 0.8999999761581421
+        }
+    },
+    "timestamp": "2026-10-12T14:10:57.564236"
+}
+```
+
+Submitting a correction:
+
 ```bash
 curl -X POST http://localhost:8000/corrections \
   -H "Content-Type: application/json" \
   -d '{"encounter_id": "enc_00001", "diagnosis": "pneumonia", "confidence": 0.9, "corrections": {"reason": "Clinical assessment"}}'
 ```
 
-## Data Structure
-
-### Raw Data
 ```
-data/raw/
-├── images/           # ChestMNIST images (50 PNG files)
-├── notes/            # Clinical notes (50 TXT files)
-└── vitals/           # Vital signs (50 CSV files)
+{"message":"Correction saved successfully","encounter_id":"enc_00001"}
 ```
 
-### Database
-- **DuckDB** with 4 manifest tables
-- **Contract validation** for data quality
-- **Unified curated_manifest** for cross-modal queries
+## Project structure
 
-## Medical Conditions
-
-The system recognizes 14 ChestMNIST conditions:
-- atelectasis, cardiomegaly, effusion, infiltration
-- mass, nodule, pneumonia, pneumothorax
-- consolidation, edema, emphysema, fibrosis
-- pleural, hernia
-
-## Architecture
-
-- **FastAPI** for RESTful API
-- **DuckDB** for analytical database
-- **Contract validation** for data quality
-- **Multi-modal fusion** for evidence gathering
-- **Web UI** for human review and correction
-
-## Development
-
-### Project Structure
 ```
-granite-lite/
-├── src/                    # Source code
-├── data/raw/              # Raw data files
-├── data/processed/        # Generated data & database
-├── static/                # Web assets
-├── templates/             # HTML templates
-├── main.py               # Entry point
-└── requirements.txt      # Dependencies
+playbook-01-multimodal-ai-semantic-layer/
+├── main.py                 # Entry point: --ingest (or --setup), --server
+├── generate_raw_data.py    # Regenerates the synthetic notes and vitals
+├── src/
+│   ├── raw_ingestion.py    # Ingestion pipeline and DuckDB manifests
+│   ├── semantic_api.py     # FastAPI app and fusion engine
+│   ├── models.py           # Record contracts and validation
+│   ├── data_generator.py   # Synthetic note and vitals generators
+│   └── ingestion.py        # Legacy, not used by main.py
+├── data/raw/               # Sample data (see Data and licenses)
+├── data/processed/         # Created by --ingest (DuckDB file)
+├── static/                 # static/images created by --ingest
+├── templates/reviewer.html # Reviewer UI
+├── tests/test_smoke.py     # make smoke
+└── requirements.txt        # Pinned, exported from uv.lock
 ```
 
-### Key Files
-- `main.py` - Application entry point
-- `src/raw_ingestion.py` - Data ingestion pipeline
-- `src/semantic_api.py` - FastAPI application
-- `src/models.py` - Data models and validation
-
-## Dataset Acknowledgement
-
-This project uses the ChestMNIST dataset from [MedMNIST](https://medmnist.com/). We acknowledge the original authors for providing this valuable medical imaging dataset for research and development purposes.
+The 14 ChestMNIST conditions: atelectasis, cardiomegaly, effusion, infiltration, mass, nodule, pneumonia, pneumothorax, consolidation, edema, emphysema, fibrosis, pleural, hernia.
 
 ## License
 
@@ -118,7 +210,7 @@ MIT License - see [LICENSE](LICENSE) file for details.
 
 ## Copyright
 
-Copyright (c) 2025
+Copyright (c) 2025-2026
 Data Engineering for Multimodal AI
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:

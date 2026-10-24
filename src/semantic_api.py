@@ -1,7 +1,7 @@
 """
 Semantic API for event fusion and evidence/lineage tracking
 
-Copyright (c) 2025
+Copyright (c) 2025-2026
 Data Engineering for Multimodal AI
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
@@ -11,7 +11,7 @@ The above copyright notice and this permission notice shall be included in all c
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 """
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse
 from fastapi.templating import Jinja2Templates
@@ -27,6 +27,8 @@ from models import FusedEvent
 app = FastAPI(title="Granite Lite Semantic API", version="1.0.0")
 
 # Mount static files and templates
+# static/images is populated by `python main.py --ingest`
+os.makedirs("static/images", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 templates = Jinja2Templates(directory="templates")
 
@@ -52,6 +54,7 @@ class SemanticFusionEngine:
     
     def __init__(self, db_path: str):
         self.db_path = db_path
+        os.makedirs(os.path.dirname(db_path) or ".", exist_ok=True)
         self.conn = duckdb.connect(db_path)
         
         # Medical condition mapping
@@ -95,7 +98,7 @@ class SemanticFusionEngine:
         """, [encounter_id]).fetchone()
         
         if result:
-            return eval(result[0])  # Convert string back to list
+            return json.loads(result[0])  # stored as str(list), e.g. "[0, 1, 0]"
         return []
     
     def get_vitals_summary(self, vitals_path: str) -> Dict[str, Any]:
@@ -104,9 +107,9 @@ class SemanticFusionEngine:
             return {}
         
         # Read vitals CSV and compute summary stats
-        vitals_df = self.conn.execute(f"""
-            SELECT * FROM read_csv_auto('{vitals_path}')
-        """).df()
+        vitals_df = self.conn.execute(
+            "SELECT * FROM read_csv_auto(?)", [vitals_path]
+        ).df()
         
         if vitals_df.empty:
             return {}
@@ -285,7 +288,7 @@ async def submit_correction(correction: CorrectionRequest):
         raise HTTPException(status_code=500, detail=f"Failed to save correction: {str(e)}")
 
 @app.get("/reviewer/{encounter_id}", response_class=HTMLResponse)
-async def reviewer_ui(encounter_id: str):
+async def reviewer_ui(request: Request, encounter_id: str):
     """Simple reviewer UI for human-in-the-loop correction"""
     try:
         event = fusion_engine.fuse_event(encounter_id)
@@ -295,8 +298,7 @@ async def reviewer_ui(encounter_id: str):
             SELECT encounter_id FROM curated_manifest ORDER BY encounter_id
         """).fetchall()
         
-        return templates.TemplateResponse("reviewer.html", {
-            "request": {"url": {"pathname": f"/reviewer/{encounter_id}"}},
+        return templates.TemplateResponse(request, "reviewer.html", {
             "encounter_id": encounter_id,
             "event": event,
             "encounters": [row[0] for row in encounters]

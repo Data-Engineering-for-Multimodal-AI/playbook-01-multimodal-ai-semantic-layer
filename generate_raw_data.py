@@ -4,7 +4,9 @@ Generate raw data files for granite-lite pipeline
 This creates the clinical notes and vital signs as raw data files
 """
 
+import argparse
 import os
+import random
 import sys
 sys.path.append('src')
 
@@ -12,9 +14,10 @@ from data_generator import ClinicalNoteGenerator, VitalsGenerator
 from models import parse_filename_to_encounter
 import glob
 
-def generate_raw_data():
+def generate_raw_data(seed: int = 42):
     """Generate all raw data files"""
     print("Generating raw data files...")
+    random.seed(seed)  # same notes and vital values on every run (timestamps still use the current time)
     
     # Create directories
     os.makedirs("data/raw/notes", exist_ok=True)
@@ -63,4 +66,6 @@ def generate_raw_data():
     print("  data/raw/vitals/    - Vital signs CSV files")
 
 if __name__ == "__main__":
-    generate_raw_data()
+    parser = argparse.ArgumentParser(description="Generate synthetic notes and vitals for the ChestMNIST images")
+    parser.add_argument("--seed", type=int, default=42, help="Random seed (default: 42)")
+    generate_raw_data(parser.parse_args().seed)
