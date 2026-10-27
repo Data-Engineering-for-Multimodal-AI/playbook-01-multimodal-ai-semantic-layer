@@ -104,3 +104,20 @@ def test_submit_correction(client):
     })
     assert response.status_code == 200
     assert response.json()["encounter_id"] == "enc_00001"
+
+
+def test_note_findings_match_image_labels():
+    # The synthetic notes name only conditions their image is labelled with
+    import re
+    sys.path.insert(0, str(ROOT / "src"))
+    from data_generator import ClinicalNoteGenerator
+    from models import parse_filename_to_encounter
+    terms = ClinicalNoteGenerator().clinical_terms
+    assert len(terms) == 14
+    for image in (ROOT / "data" / "raw" / "images").glob("*.png"):
+        encounter_id, labels = parse_filename_to_encounter(image.name)
+        note = (ROOT / "data" / "raw" / "notes" / f"{encounter_id}_note.txt").read_text()
+        found = re.search(r"Notable findings include ([^.]*)", note)
+        if found:
+            for term in found.group(1).split(", "):
+                assert labels[terms.index(term)] == 1, (encounter_id, term)

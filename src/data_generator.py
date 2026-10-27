@@ -30,10 +30,12 @@ class ClinicalNoteGenerator:
             "decreased breath sounds", "crackles heard", "wheezing present"
         ]
         
+        # One term per ChestMNIST label, in the label vector's order (generate_note looks terms up
+        # by label position)
         self.clinical_terms = [
-            "opacity", "consolidation", "infiltrate", "pneumonia", "atelectasis",
-            "cardiomegaly", "effusion", "mass", "nodule", "pneumothorax",
-            "edema", "emphysema", "fibrosis", "pleural", "hernia"
+            "atelectasis", "cardiomegaly", "effusion", "infiltrate", "mass",
+            "nodule", "pneumonia", "pneumothorax", "consolidation", "edema",
+            "emphysema", "fibrosis", "pleural thickening", "hernia"
         ]
         
         self.assessments = [
