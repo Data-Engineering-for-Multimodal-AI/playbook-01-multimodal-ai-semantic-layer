@@ -1,6 +1,6 @@
 # Multimodal AI Semantic Layer for ChestMNIST
 
-**Chapter 1 playbook** from *Data Engineering for Multimodal AI* (O'Reilly, 2026), pp. 20–31.
+**Chapter 1 playbook** from *Data Engineering for Multimodal AI* (O'Reilly, 2026), pages 21–32 (Early Release page numbers; they may differ in the final print).
 Book: https://oreil.ly/data-engineering-multimodal
 
 > Want the code exactly as printed? Use the `first-edition` tag. This branch is the 2026 maintenance update; see [Differences from the printed book](#differences-from-the-printed-book).
@@ -60,13 +60,14 @@ Other entry points: `python test_system.py` prints fused events from the databas
 
 | What changed | Why | Book page |
 |---|---|---|
-| `requirements.txt` now exists (pinned, exported from `uv.lock`). Python 3.12+ required | The file was missing, so step 1 failed | Ch. 1 setup step (pp. 20–31) |
-| `python main.py --ingest` rebuilds the database on each run, and the database is no longer committed | Re-running added duplicate rows (450 curated rows for 50 encounters on a fresh clone) | Ch. 1 ingest step |
-| Reviewer UI works on current FastAPI/Starlette | Starlette 1.0 removed the old template call; the page returned HTTP 500 | Ch. 1 reviewer step |
+| `requirements.txt` now exists (pinned, exported from `uv.lock`). Python 3.12+ required | The file was missing, so the install in Step 2 failed | 25 |
+| `python main.py --ingest` rebuilds the database on each run, and the database is no longer committed | Re-running added duplicate rows (450 curated rows for 50 encounters on a fresh clone) | 25–27 |
+| Reviewer UI works on current FastAPI/Starlette | Starlette 1.0 removed the old template call; the page returned HTTP 500 | 27–31 |
 | `python main.py --setup` works (alias for `--ingest`) | `start.sh` and `demo.py` called a flag that didn't exist | n/a |
 | `static/images/` is filled by `--ingest` instead of being committed | Generated copy of `data/raw/images/` | n/a |
 | `generate_raw_data.py --seed` (default 42) | Regeneration is now repeatable. The committed notes and vitals predate the seed, so regenerating gives different text and values from the repo's files | n/a |
-| This README describes linking as a shared encounter ID from file names and says that notes and vitals are synthetic | Match what the code does | Ch. 1 text, "entity resolution linking modalities" |
+| The 11 notes that list findings name the image's conditions; the generator's term list follows the ChestMNIST label order | The term list was in a different order, so every listed finding contradicted the image labels (for example, `enc_00014` is labelled cardiomegaly and its note said "consolidation"). Only the finding words changed; the rest of each note is as committed | 24 |
+| This README describes linking as a shared encounter ID from file names and says that notes and vitals are synthetic | Match what the code does | 22, "entity resolution linking modalities" |
 
 This section is the record of changes since printing. Full list: [CHANGELOG.md](CHANGELOG.md).
 
@@ -87,7 +88,7 @@ No real patient notes or vitals are included. If you use the ChestMNIST images, 
 
 ## Expected output
 
-From a fresh clone on 2026-10-12, macOS 26.5.1 arm64, Python 3.12.15, using `pip install -r requirements.txt`.
+From a fresh clone on 2026-10-12, macOS 26.5.1 arm64, Python 3.12.15, using `pip install -r requirements.txt`. This is the output of this version; it may differ from the output printed in the book, and that's okay.
 
 `python main.py --ingest`:
 

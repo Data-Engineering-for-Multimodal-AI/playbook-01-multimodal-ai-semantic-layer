@@ -1,5 +1,17 @@
 # Changelog
 
+## 2026.10.1 (2026-10-27)
+
+Checked against the book (Early Release, pages 21–32).
+
+### Fixed
+- The synthetic notes' "Notable findings" contradicted the image labels: the generator's term list
+  was not in ChestMNIST label order. The list is fixed, and the 11 notes that list findings now name
+  the conditions their image is labelled with (only those words changed). A test checks every note.
+
+### Changed
+- README: page numbers.
+
 ## 2026.10 (2026-10-12): 2026 maintenance update
 
 The printed version is tagged `first-edition`.
