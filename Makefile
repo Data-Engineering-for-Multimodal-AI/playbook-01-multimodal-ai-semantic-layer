@@ -1,5 +1,8 @@
 .PHONY: setup run serve smoke clean
 
+# A bare `make` runs the smoke test, as it did before the uniform targets were added.
+.DEFAULT_GOAL := smoke
+
 # Uniform targets for The Playbooks. The book's commands (pip install -r requirements.txt,
 # python main.py --ingest, python main.py --server) still work as printed.
 
