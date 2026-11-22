@@ -147,7 +147,7 @@ encounters    rows one INSERT per record one INSERT per table  faster
      5,000  20,000                 7.14s                2.36s    3.0x
 ```
 
-Writing a table at once is 3 to 6 times faster here. The gap narrows as the set grows because reading the files takes a larger share of the time. The Mac was running other work, so times varied between runs; the order didn't. Pass other sizes with `make try-scale SIZES="100 10000"`.
+Writing each table at once was 3 to 6 times faster on the Mac, which was running other work at the time, so its times varied between runs. In CI (ubuntu-latest, Python 3.13) the same run gave 1.36 s against 0.13 s for 500 encounters and 13.16 s against 0.79 s for 5,000: 10 to 17 times faster, and the gap grew with the number of encounters. Pass other sizes with `make try-scale SIZES="100 10000"`.
 
 ## Use your own data
 
@@ -225,7 +225,7 @@ This playbook runs on one machine with 50 sample encounters. Before you run some
 4. **Link by more than a file name.** The encounter ID comes from the image's file name (`sample_005` becomes `enc_00006`); a renamed file links to the wrong patient or to nobody, and a note with no image is dropped by the left join without a message. *Chapter 1, "Entity Resolution and Why It's Hard" (page 12).*
 5. **Measure quality instead of fixing it.** Quality is 0.95, 0.85 and 0.90 for every image, note and vitals file, so every complete encounter gets confidence 0.663. Compute it from the data (image resolution, note length, gaps and out-of-range vitals). *Chapter 1, "Building the Semantic Layer: A Step-by-Step Summary" (page 12).*
 6. **Use the corrections.** `POST /corrections` stores a row that nothing reads: the event and the reviewer page show the original diagnosis after a correction, and the reviewer is always recorded as `human_reviewer`. Show the latest correction, record who made it, and use corrections as labels. *Chapter 4, "Annotation: Where Multimodal Systems Mature or Collapse" (page 123).*
-7. **Write in batches and add instead of rebuilding.** Ingestion drops and rebuilds every table and writes one row per `INSERT`; one `INSERT` per table was 3 to 6 times faster ([Try this 3](#try-this)). Load new encounters incrementally. *Chapter 1, "Processing at Scale" (page 15).*
+7. **Write in batches and add instead of rebuilding.** Ingestion drops and rebuilds every table and writes one row per `INSERT`; one `INSERT` per table was 3 to 6 times faster on a Mac and 10 to 17 times faster in CI ([Try this 3](#try-this)). Load new encounters incrementally. *Chapter 1, "Processing at Scale" (page 15).*
 8. **Lock down the API and the data.** There is no authentication, the static folder serves every X-ray to anyone who knows the name, and DuckDB allows one writer process, so `make load` can't run while the API is up. For real patient data you need access control, audit logs and a database that serves many clients. *Chapter 11, "Protecting Data Across the Pipeline" (page 421); Chapter 11, "Lineage and Provenance Tracking" (page 416).*
 
 ## What it costs
@@ -233,7 +233,7 @@ This playbook runs on one machine with 50 sample encounters. Before you run some
 | Where you run it | Cost |
 |---|---|
 | Your machine | $0. Everything runs locally: no API keys, no paid services. About 150 MB of disk, most of it the Python environment. |
-| A GitHub Codespace (2 cores, 8 GB, the default size; the repo asks for nothing larger) | Estimated $0.18 per hour at GitHub's list price (November 2026). A free personal account includes 120 core-hours a month, about 60 hours on this machine. |
+| A GitHub Codespace (2 cores, 8 GB, the default size; the repo asks for nothing larger) | Estimated $0.18 per hour at GitHub's list price (November 2026). A free personal account includes 120 core-hours a month, about 60 hours on this machine. In CI, `make run` took 2 s in a freshly built devcontainer. |
 
 ## How it works
 
