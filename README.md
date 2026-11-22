@@ -1,7 +1,11 @@
-# Multimodal AI Semantic Layer for ChestMNIST
+# Playbook 01: Link an X-ray, a note and vitals into one clinical event
+**How to build a semantic layer for multimodal data.** Chapter 1 of [*Data Engineering for Multimodal AI*](https://oreil.ly/data-engineering-multimodal) (O'Reilly, 2026), pages 20–31.
 
-**Chapter 1 playbook** from *Data Engineering for Multimodal AI* (O'Reilly, 2026), pages 20–31.
-Book: https://oreil.ly/data-engineering-multimodal
+An X-ray, a physician's note and ICU vitals about the same patient can't be used together unless something ties them to the same event. In this repo, we explore this with a single clinical case: one X-ray, one note and a set of vitals. Follow along to give all three a shared contract, fuse them into one event, and serve an AI proposal with its evidence to a reviewer who can confirm or correct it.
+
+**The problem.** Each modality can be correct on its own and still be useless together, because nothing says which X-ray, note and vitals belong to the same patient at the same moment.
+
+**What you'll work with.** You'll build a small semantic layer: a shared contract that gives every record an ID, a timestamp, its source and a quality flag, so the three can be aligned, fused and checked by a person.
 
 > Want the code exactly as printed? Use the `first-edition` tag. This branch is the 2026 maintenance update; see [Differences from the printed book](#differences-from-the-printed-book).
 
