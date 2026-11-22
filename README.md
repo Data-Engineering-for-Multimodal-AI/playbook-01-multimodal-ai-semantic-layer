@@ -441,6 +441,8 @@ playbook-01-multimodal-ai-semantic-layer/
 
 The 14 ChestMNIST conditions: atelectasis, cardiomegaly, effusion, infiltration, mass, nodule, pneumonia, pneumothorax, consolidation, edema, emphysema, fibrosis, pleural, hernia.
 
+If this playbook helped you, a star helps other readers find it.
+
 ## License
 
 MIT License - see [LICENSE](LICENSE) file for details.
