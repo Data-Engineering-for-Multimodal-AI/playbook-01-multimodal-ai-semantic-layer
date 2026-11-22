@@ -4,6 +4,8 @@ on:
   push:
   pull_request:
   workflow_dispatch:
+  schedule:
+    - cron: "0 6 * * 1"   # weekly, Monday 06:00 UTC, so breakage in upstream packages shows up
 
 jobs:
   smoke:
@@ -19,8 +21,50 @@ jobs:
       - uses: astral-sh/setup-uv@v10.3.0
       - name: Smoke test
         run: make smoke
+      # README "Run it", steps 2-4: make run, make serve, make event, a correction
+      - name: Run it, steps 2-4
+        run: |
+          make run | tee /tmp/run.txt
+          grep -q "Contract violations: 0" /tmp/run.txt
+          grep -q "Diagnosis: infiltration" /tmp/run.txt
+          make serve > /tmp/serve.log 2>&1 &
+          for i in $(seq 1 60); do curl -sf localhost:8000/health > /dev/null && break; sleep 1; done
+          make event ID=enc_00007 | tee /tmp/event.txt
+          grep -q '"diagnosis": "infiltration"' /tmp/event.txt
+          curl -sf -X POST localhost:8000/corrections -H "Content-Type: application/json" \
+            -d '{"encounter_id": "enc_00007", "diagnosis": "pneumothorax", "confidence": 0.9, "corrections": {"reason": "Reviewer read the X-ray"}}' \
+            | grep -q "Correction saved successfully"
+          curl -sf localhost:8000/reviewer/enc_00007 | grep -q "enc_00007"
+          pkill -f "main.py --server" || true
+      - name: Use your own data (file checks)
+        run: |
+          uv run --frozen pytest -q tests/test_own_data.py
+          make check-data DIR=data/raw | tee /tmp/check.txt
+          grep -q "All files passed the checks." /tmp/check.txt
+      - name: Try this 1, 2 and 3
+        run: |
+          make try-missing | tee /tmp/t1.txt
+          grep -q "10 vitals missing .* 40 .* 10  TypeError" /tmp/t1.txt
+          make try-contract | tee /tmp/t2.txt
+          grep -q "vitals without an spo2 column .*500 KeyError" /tmp/t2.txt
+          make try-scale
+      - name: API log on failure
+        if: failure()
+        run: tail -50 /tmp/serve.log || true
       - name: Printed install path (pip install -r requirements.txt)
         run: |
           uv venv --seed --python ${{ matrix.python-version }} /tmp/pipenv
           /tmp/pipenv/bin/python -m pip install -q -r requirements.txt
           /tmp/pipenv/bin/python main.py --ingest
+
+  devcontainer:
+    # Builds .devcontainer/ the way Codespaces does and runs the playbook inside it.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Build the devcontainer and run the playbook
+        uses: devcontainers/ci@v0.3
+        with:
+          push: never
+          # make run, timed from a clean devcontainer
+          runCmd: start=$(date +%s) && make run && echo "Time to first output in a clean devcontainer was $(( $(date +%s) - start )) s"

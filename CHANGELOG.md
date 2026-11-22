@@ -1,5 +1,32 @@
 # Changelog
 
+## Unreleased (v1.1.0)
+
+Nothing the book shows has changed.
+
+### Added
+- `make event ID=...` prints one fused event from the running API (`GET /event/{id}`).
+- `make check-data DIR=...` and `make load DIR=...`: check a folder of your own encounters
+  (images, notes, vitals in the `data/raw/` layout) and ingest it (`scripts/load_encounters.py`).
+  Tests in `tests/test_own_data.py`.
+- Three measured experiments: `make try-missing`, `make try-contract`, `make try-scale`
+  (`experiments/`).
+- README: numbered Run it steps, time tiers, Try this, Use your own data, What you end up with,
+  Before production, What it costs.
+- CI: runs the Run it steps with checks on their output, the three experiments, the own-data
+  tests, and prints the time to first output in a clean devcontainer.
+- `make setup`, `make run`, `make serve` and `make clean`. `make run` ingests the sample data and
+  prints fused events; `make serve` starts the API. `make smoke` is unchanged.
+- `.devcontainer/` so the repo opens in GitHub Codespaces with dependencies installed.
+- CI: a weekly scheduled run, a `make run` step, and a job that builds the devcontainer and runs
+  `make run` inside it.
+
+### Changed
+- README: "What you'll build" is now "How it works"; "Quick start" is now "Run it the way the
+  book does", with its content unchanged. The first-edition note points to it.
+- README opening: a title that says what you'll do, three sentences on why, the example and what you'll do, then the data engineering problem and what you'll work with.
+- Book page numbers now match the printed book (they were Early Release page numbers).
+
 ## 2026.10.1 (2026-10-27)
 
 Checked against the book (Early Release, pages 21–32).
