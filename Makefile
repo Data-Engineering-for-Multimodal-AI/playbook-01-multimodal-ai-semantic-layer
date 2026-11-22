@@ -1,6 +1,26 @@
-.PHONY: smoke
+.PHONY: setup run serve smoke clean
+
+# Uniform targets for The Playbooks. The book's commands (pip install -r requirements.txt,
+# python main.py --ingest, python main.py --server) still work as printed.
+
+# Install the locked dependencies into .venv.
+setup:
+	uv sync --frozen
+
+# Ingest the sample data, then print fused events from the semantic layer.
+run: setup
+	uv run --frozen python main.py --ingest
+	uv run --frozen python test_system.py
+
+# Start the API and reviewer UI on http://localhost:8000.
+serve: setup
+	uv run --frozen python main.py --server
 
 # End-to-end check on the sample data (CPU, no network calls after install).
 smoke:
 	uv sync --frozen
 	uv run --frozen pytest -q tests/test_smoke.py
+
+# Remove generated files. The raw sample data in data/raw/ is kept.
+clean:
+	rm -rf data/processed static/images .pytest_cache

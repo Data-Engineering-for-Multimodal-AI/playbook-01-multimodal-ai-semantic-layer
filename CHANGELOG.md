@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased (v1.1.0)
+
+Nothing the book shows has changed.
+
+### Added
+- `make setup`, `make run`, `make serve` and `make clean`. `make run` ingests the sample data and
+  prints fused events; `make serve` starts the API. `make smoke` is unchanged.
+- `.devcontainer/` so the repo opens in GitHub Codespaces with dependencies installed.
+- CI: a weekly scheduled run, a `make run` step, and a job that builds the devcontainer and runs
+  `make run` inside it.
+
 ## 2026.10.1 (2026-10-27)
 
 Checked against the book (Early Release, pages 21–32).
