@@ -1,5 +1,15 @@
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/img/header-dark.png">
+  <img src="docs/img/header-light.png" alt="Playbook 01 of 12, Chapter 1 of Data Engineering for Multimodal AI. Build: a semantic layer for clinical data. Data: X-rays, notes and vitals." width="100%">
+</picture>
+
 # Playbook 01: Link an X-ray, a note and vitals into one clinical event
 **How to build a semantic layer for multimodal data.** Chapter 1 of [*Data Engineering for Multimodal AI*](https://oreil.ly/data-engineering-multimodal) (O'Reilly, 2026), pages 20–31.
+
+[![Tests](https://github.com/Data-Engineering-for-Multimodal-AI/playbook-01-multimodal-ai-semantic-layer/actions/workflows/smoke.yml/badge.svg?branch=main)](https://github.com/Data-Engineering-for-Multimodal-AI/playbook-01-multimodal-ai-semantic-layer/actions/workflows/smoke.yml)
+![Python 3.12 | 3.13](https://img.shields.io/badge/python-3.12%20%7C%203.13-1f1a19?labelColor=6b6361)
+[![License: MIT](https://img.shields.io/badge/license-MIT-1f1a19?labelColor=6b6361)](LICENSE)
+[![Open in GitHub Codespaces](https://img.shields.io/badge/Open%20in-Codespaces-b4422e?logo=github&labelColor=6b6361)](https://codespaces.new/Data-Engineering-for-Multimodal-AI/playbook-01-multimodal-ai-semantic-layer?quickstart=1)
 
 An X-ray, a physician's note and ICU vitals about the same patient can't be used together unless something ties them to the same event. In this repo, we explore this with a single clinical case: one X-ray, one note and a set of vitals. Follow along to give all three a shared contract, fuse them into one event, and serve an AI proposal with its evidence to a reviewer who can confirm or correct it.
 
@@ -237,6 +247,18 @@ This playbook runs on one machine with 50 sample encounters. Before you run some
 
 ## How it works
 
+```mermaid
+flowchart LR
+  A["ChestMNIST X-rays<br/>28x28 PNGs"] --> D["Record contracts<br/>ID, timestamp, provenance, quality"]
+  B["Clinical notes<br/>synthetic text"] --> D
+  C["Vitals<br/>synthetic HR, SpO2, RR"] --> D
+  D --> E["DuckDB manifests<br/>linked by encounter ID"]
+  E --> F["Fusion<br/>diagnosis and confidence"]
+  F --> G["FastAPI and reviewer page<br/>corrections table"]
+  classDef key fill:#ffe8e3,stroke:#b4422e,color:#1f1a19
+  class D key
+```
+
 The code calls the semantic layer Granite Lite. It fuses three modalities for 50 encounters:
 
 - **Images**: 50 ChestMNIST chest X-ray thumbnails (28×28) with their 14 diagnostic labels
@@ -318,7 +340,7 @@ No real patient notes or vitals are included. If you use the ChestMNIST images, 
 - Jiancheng Yang, Rui Shi, Donglai Wei, Zequan Liu, Lin Zhao, Bilian Ke, Hanspeter Pfister, Bingbing Ni. "MedMNIST v2 – A large-scale lightweight benchmark for 2D and 3D biomedical image classification." *Scientific Data*, 2023.
 - Jiancheng Yang, Rui Shi, Bingbing Ni. "MedMNIST Classification Decathlon: A Lightweight AutoML Benchmark for Medical Image Analysis." *IEEE ISBI*, 2021.
 
-The full list, with sources, licenses and citations, is in [DATA_LICENSES.md](DATA_LICENSES.md).
+The full list, with sources, licenses and citations, is in [DATA_SOURCES.md](DATA_SOURCES.md).
 
 ## Expected output
 
@@ -417,6 +439,14 @@ curl -X POST http://localhost:8000/corrections \
 {"message":"Correction saved successfully","encounter_id":"enc_00001"}
 ```
 
+## Troubleshooting
+
+**`make event` says "No answer from http://localhost:8000".** Start the API with `make serve` in another terminal and leave it running. Encounter IDs go from `enc_00001` to `enc_00050`; http://localhost:8000/encounters lists them.
+
+**`make load` stops with "The database is open in another process".** `make serve` holds the DuckDB file. Stop it with Ctrl+C, run `make load DIR=my_encounters` again, then start `make serve`.
+
+**`GET /event/{encounter_id}` returns HTTP 500.** An encounter without a vitals file can't be served. Add `vitals/<encounter>_vitals.csv`; `make check-data DIR=my_encounters` lists every encounter that is missing one.
+
 ## Project structure
 
 ```
@@ -459,3 +489,8 @@ Permission is hereby granted, free of charge, to any person obtaining a copy of 
 The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+---
+
+[The book](https://oreil.ly/data-engineering-multimodal) · [All playbooks](https://github.com/Data-Engineering-for-Multimodal-AI#playbooks) · Next: [Playbook 02](https://github.com/Data-Engineering-for-Multimodal-AI/playbook-02-multimodal-feature-store-streambuy)
+<!-- Substack post for this playbook: add link here -->
