@@ -318,6 +318,8 @@ No real patient notes or vitals are included. If you use the ChestMNIST images, 
 - Jiancheng Yang, Rui Shi, Donglai Wei, Zequan Liu, Lin Zhao, Bilian Ke, Hanspeter Pfister, Bingbing Ni. "MedMNIST v2 – A large-scale lightweight benchmark for 2D and 3D biomedical image classification." *Scientific Data*, 2023.
 - Jiancheng Yang, Rui Shi, Bingbing Ni. "MedMNIST Classification Decathlon: A Lightweight AutoML Benchmark for Medical Image Analysis." *IEEE ISBI*, 2021.
 
+The full list, with sources, licenses and citations, is in [DATA_LICENSES.md](DATA_LICENSES.md).
+
 ## Expected output
 
 From a fresh clone on 2026-10-12, macOS 26.5.1 arm64, Python 3.12.15, using `pip install -r requirements.txt`. This is the output of this version; it may differ from the output printed in the book, and that's okay.

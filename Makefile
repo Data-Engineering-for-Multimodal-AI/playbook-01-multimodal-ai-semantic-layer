@@ -14,6 +14,7 @@ setup:
 run: setup
 	uv run --frozen python main.py --ingest
 	uv run --frozen python test_system.py
+	@echo "playbook-01-multimodal-ai-semantic-layer" > .playbook-done
 
 # Start the API and reviewer UI on http://localhost:8000.
 serve: setup
